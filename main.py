@@ -2,9 +2,11 @@ from math import pi
 from math import tan
 
 frequency = 0
-c = 299792458
+c = 299792458 # Speed of light
 
-
+# Each electrical comment has a class. The class handles characteristics of a particular "model" of component; eg a 1uF capacitor in a series configuration.
+# Classes also contain some functions, for example, the .impede method will calculate the affect a component has on impedence.
+# This class-based approaches makes it easier to add electrical components later.
 class Capacitor:
     def __init__(self, cap, configuration):
         self.cap = cap  # in Farads
@@ -17,6 +19,7 @@ class Capacitor:
 
     def impede(self, inz):
         if self.shunt:
+            # Shunt components are best handled by adding their admittance to the admittance of the rest of the circuit.
             inz = 1 / inz  # convert to admittance
             inz += 1 / complex(0, -1 * self.reactance)  # add the admittance of the capacitor
             return 1 / inz  # convert back to impedence
@@ -42,8 +45,8 @@ class Inductor:
         else:
             return inz + complex(0, self.reactance)  # add the inductive reactance of the inductor
 
-
 class TransmissionLine:
+    # Transmission lines are much more complicated, and thus are only modelled for series configuration.
     # length = physical length, characteristic = characteristic impedence, vf = velocity factor, configuration = shunt/series
     # TODO: Figure out how to handle stubs and other transmission lines
     def __init__(self, plength, characteristic, vf, configuration):
@@ -80,7 +83,7 @@ class Resistor:
             return inz + complex(self.resistance, 0)
 
 
-def getImpedence(prompt):
+def getImpedence(prompt): # This function will query the user for an impedence value.
     while True:
         impedenceString = input(prompt)
         impedenceString = impedenceString.replace(" ", "")
@@ -94,7 +97,7 @@ def getImpedence(prompt):
             return impedence
 
 
-def printcircuit(circ):
+def printcircuit(circ): # This function generates an ASCII art image of the circuit, for reference purposes.
     nC = nL = nT = nR = 0  # Counts for the types
     # Generate a map of the circuit, as well as values for each element.
     sep = " — "
@@ -103,6 +106,8 @@ def printcircuit(circ):
     diagramB = ["  "]  # Bottom Diagram
     data = []
     for i in circ:
+        # TODO: Rewrite this to not use if blocks and instead use a more adaptive approach.
+        # It's pretty messy, but it works well.
         if i.type == "c":
             nC += 1
             if i.shunt:
@@ -149,6 +154,7 @@ def printcircuit(circ):
 
 
 def getconfig():
+    # Query for series or shunt configuration.
     while True:
         egg = input("Series (se) or Shunt (sh): ").lower()
         if "sh" in egg:
@@ -158,41 +164,43 @@ def getconfig():
         else:
             print('Error: Invalid input. Please enter "series" or "shunt"')
 
-
 def calculateoutput(inz, circuit):
+    # Thanks to the impedence transforms being located in the component classes, this is a very, very short bit of code.
+    # It simply applies all of the component's changes one after another
     for item in circuit:
         inz = item.impede(inz)
     return inz
 
 
-# Program Start
+# START OF PROGRAM FLOW
+# This is where the program actually beings.
 impedence = getImpedence("Please enter the input (load) impedence in form a ± bj: ")
 while frequency is 0:
     frequency = float(input("Please enter a frequency in Hz: "))
 circuit = []
 
-# User Input Time
+# Main User Input Loop
 helpMenu = "C: Add Capacitor\tL: Add Inductor\t\tR: Add Resistor\tT: Add Transmission Line\nP: Print Circuit\tD: Calculate Output\tX: Clear Data\tH: Help\tQ: Quit"
 print("Please enter an action.")
 print(helpMenu)
 while True:
     action = input("Action: ").lower()
     # why can't we have switch cases :(
-    if action == 'q':
+    if action == 'q': # Quit
         raise SystemExit
-    elif action == 'd':
+    elif action == 'd': # Calculate Output data
         Zo = calculateoutput(impedence, circuit)
         print("Impedence at Z₀: {:.2f} Ω".format(Zo))
         Zi = 50
         Gamma = (Zi - Zo)/(Zi + Zo)
         SWR = (1 + abs(Gamma)) / (1 - abs(Gamma))
         print("SWR Relative to 50+j0 Ω Load: {0:.1f}:1".format(SWR))
-    elif action == 'p':
+    elif action == 'p': # Print Circuit
         printcircuit(circuit)
-    elif action == 'x':
+    elif action == 'x': # Clear Circuit
         circuit = []
         print("Network cleared.")
-    elif action == 'h':
+    elif action == 'h': # Help
         print(helpMenu)
     elif action == 'c':
         config = getconfig()
