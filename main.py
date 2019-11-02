@@ -46,6 +46,7 @@ class Inductor:
 
 class TransmissionLine:
     # length = physical length, characteristic = characteristic impedence, vf = velocity factor, configuration = shunt/series
+    #TODO: Figure out how to handle stubs and other transmission lines
     def __init__(self, length, characteristic, vf, configuration):
         self.length = length * vf
         self.impedence = characteristic
@@ -59,13 +60,8 @@ class TransmissionLine:
 
     def impede(self, inz):
         waveNumber = 2 * pi / (c / frequency)  # wavenumber = 2pi / λ
-        if self.shunt:
-            inz = 1 / inz  # convert to admittance, etc. etc.
-        # Zout = Z₀ * (Z_L + jZ0 tan(Bl)) / (Z₀ + jZ_L tan(Bl)
         zOut = self.impedence * complex(inz, self.impedence * tan(waveNumber * self.length))
         zOut /= complex(self.impedence, inz * tan(waveNumber * self.length))
-        if self.shunt:
-            zOut = 1 / zOut
         return zOut
 
 
@@ -171,9 +167,10 @@ def getconfig():
             print('Error: Invalid input. Please enter "series" or "shunt"')
 
 
-def calculateoutput(circuit):
-    # TODO: Finish this
-    print("sorry")
+def calculateoutput(inz, circuit):
+    for item in circuit:
+        inz = item.impede(inz)
+    return inz
 
 
 # Program Start
