@@ -77,7 +77,7 @@ class Resistor:
     def impede(self, inz):
         if self.shunt:
             inz = 1 / inz
-            inz += complex(self.resistance, 0)
+            inz += 1/complex(self.resistance, 0)
             return 1 / inz
         else:
             return inz + complex(self.resistance, 0)
