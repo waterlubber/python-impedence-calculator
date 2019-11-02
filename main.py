@@ -83,11 +83,6 @@ class Resistor:
             return inz + complex(self.resistance, 0)
 
 
-# TODO: Figure out what to do with this mess.
-# class Impedence:
-#     def __init__(self, imp):
-#         self.impedence = imp
-
 def getImpedence(prompt):
     while True:
         impedenceString = input(prompt)
