@@ -1,5 +1,7 @@
 from math import pi
+from math import tan
 import cmath as cx
+
 frequency = 0
 c = 299792458
 
@@ -12,15 +14,15 @@ class Capacitor:
         self.type = 'c'
 
     def getData(self, n):
-        return "C{0}: {1:8.4g} F\tX: -{2:8.4g}j".format(n, self.cap,self.reactance)
+        return "C{0}: {1:8.4g} F\tX: -{2:8.4g}j".format(n, self.cap, self.reactance)
 
     def impede(self, inz):
         if self.shunt:
-            inz = 1/inz # convert to admittance
-            inz += 1/complex(0,-1*self.reactance) # add the admittance of the capacitor
-            return 1/inz # convert back to impedence
+            inz = 1 / inz  # convert to admittance
+            inz += 1 / complex(0, -1 * self.reactance)  # add the admittance of the capacitor
+            return 1 / inz  # convert back to impedence
         else:
-            return inz + complex(0,-1*self.reactance) # add the capacitive reactance of the capacitor
+            return inz + complex(0, -1 * self.reactance)  # add the capacitive reactance of the capacitor
 
 
 class Inductor:
@@ -31,26 +33,40 @@ class Inductor:
         self.type = 'l'
 
     def getData(self, n):
-        return "L{0}: {1:8.4g} H\tX: +{2:8.4g}j".format(n, self.ind,self.reactance)
+        return "L{0}: {1:8.4g} H\tX: +{2:8.4g}j".format(n, self.ind, self.reactance)
 
     def impede(self, inz):
         if self.shunt:
-            inz = 1/inz # convert to admittance
-            inz += 1/complex(0,*self.reactance) # add the admittance of the inductor
-            return 1/inz # convert back to impedence
+            inz = 1 / inz  # convert to admittance
+            inz += 1 / complex(0, *self.reactance)  # add the admittance of the inductor
+            return 1 / inz  # convert back to impedence
         else:
-            return inz + complex(0,*self.reactance) # add the inductive reactance of the inductor
+            return inz + complex(0, *self.reactance)  # add the inductive reactance of the inductor
+
 
 class TransmissionLine:
-    def __init__(self, length, characteristic, vf,
-                 configuration):  # length = physical length, characteristic = characteristic impedence, vf = velocity factor, configuration = shunt/series
+    # length = physical length, characteristic = characteristic impedence, vf = velocity factor, configuration = shunt/series
+    def __init__(self, length, characteristic, vf, configuration):
         self.length = length * vf
         self.impedence = characteristic
         self.shunt = configuration
         self.type = 't'
 
     def getData(self, n):
-        return "T{0}: ".format(n) + str(self.impedence) + " Ω\t{0:.1f} m\t{1:8.4g} λ".format(self.length,self.length/(c/frequency))
+        return "T{0}: ".format(n) + str(self.impedence) + " Ω\t{0:.1f} m\t{1:8.4g} λ".format(self.length,
+                                                                                             self.length / (
+                                                                                                         c / frequency))
+
+    def impede(self, inz):
+        waveNumber = 2 * pi / (c / frequency)  # wavenumber = 2pi / λ
+        if self.shunt:
+            inz = 1 / inz  # convert to admittance, etc. etc.
+        # Zout = Z₀ * (Z_L + jZ0 tan(Bl)) / (Z₀ + jZ_L tan(Bl)
+        zOut = self.impedence * complex(inz, self.impedence * tan(waveNumber * self.length))
+        zOut /= complex(self.impedence, inz * tan(waveNumber * self.length))
+        if self.shunt:
+            zOut = 1 / zOut
+        return zOut
 
 
 class Resistor:
@@ -61,6 +77,14 @@ class Resistor:
 
     def getData(self, n):
         return "R{0}: {1:8.4g} Ω".format(n, self.resistance)
+
+    def impede(self, inz):
+        if self.shunt:
+            inz = 1 / inz
+            inz += complex(self.resistance, 0)
+            return 1 / inz
+        else:
+            return inz + complex(self.resistance, 0)
 
 
 # TODO: Figure out what to do with this mess.
@@ -88,7 +112,7 @@ def printcircuit(circ):
     sep = " — "
     sepB = "   "
     diagram = ["Zi"]
-    diagramB = ["  "] # Bottom Diagram
+    diagramB = ["  "]  # Bottom Diagram
     data = []
     for i in circ:
         if i.type == "c":
@@ -133,7 +157,8 @@ def printcircuit(circ):
     print(sepB.join(diagramB))
     print("Component Data:\n")
     # Then, print out the values for each component.
-    print('\n'.join(data)+'\n'+'\n')
+    print('\n'.join(data) + '\n' + '\n')
+
 
 def getconfig():
     while True:
@@ -147,20 +172,20 @@ def getconfig():
 
 
 def calculateoutput(circuit):
-    #TODO: Finish this
+    # TODO: Finish this
     print("sorry")
 
 
 # Program Start
-impedence = getImpedence("Please enter the input impedence in form a ± bj: ")
+impedence = getImpedence("Please enter the input (load) impedence in form a ± bj: ")
 while frequency is 0:
     frequency = float(input("Please enter a frequency in Hz: "))
 circuit = []
 
 # User Input Time
-help = "C: Add Capacitor\tL: Add Inductor\t\tR: Add Resistor\tT: Add Transmission Line\nP: Print Circuit\tD: Calculate Output\tX: Clear Data\tH: Help\tQ: Quit"
+helpMenu = "C: Add Capacitor\tL: Add Inductor\t\tR: Add Resistor\tT: Add Transmission Line\nP: Print Circuit\tD: Calculate Output\tX: Clear Data\tH: Help\tQ: Quit"
 print("Please enter an action.")
-print(help)
+print(helpMenu)
 while True:
     action = input("Action: ").lower()
     # why can't we have switch cases :(
@@ -171,9 +196,9 @@ while True:
     elif action == 'p':
         printcircuit(circuit)
     elif action == 'x':
-        circuit=[]
+        circuit = []
     elif action == 'h':
-        print(help)
+        print(helpMenu)
     elif action == 'c':
         config = getconfig()
         capacitance = float(input("Please enter a capacitance in Farad: "))
@@ -195,4 +220,3 @@ while True:
     else:
         print(
             "C: Add Capacitor\tL: Add Inductor\tT: Add Transmission Line\tR: Add Resistor\nP: Print Current Circuit\tC: Calculate Output Impedence\tH: Help\tQ: Quit")
-
