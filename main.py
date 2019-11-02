@@ -1,14 +1,13 @@
 from math import pi
 from math import tan
-import cmath as cx
 
 frequency = 0
 c = 299792458
 
 
 class Capacitor:
-    def __init__(self, capacitance, configuration):
-        self.cap = capacitance  # in Farads
+    def __init__(self, cap, configuration):
+        self.cap = cap  # in Farads
         self.shunt = configuration  # Series (0) or Shunt (1)
         self.reactance = 1 / (2 * pi * frequency * self.cap)
         self.type = 'c'
@@ -26,8 +25,8 @@ class Capacitor:
 
 
 class Inductor:
-    def __init__(self, inductance, configuration):
-        self.ind = inductance  # in Henry
+    def __init__(self, ind, configuration):
+        self.ind = ind  # in Henry
         self.shunt = configuration  # Series or Shunt
         self.reactance = 2 * pi * frequency * self.ind
         self.type = 'l'
@@ -38,25 +37,23 @@ class Inductor:
     def impede(self, inz):
         if self.shunt:
             inz = 1 / inz  # convert to admittance
-            inz += 1 / complex(0, *self.reactance)  # add the admittance of the inductor
+            inz += 1 / complex(0, self.reactance)  # add the admittance of the inductor
             return 1 / inz  # convert back to impedence
         else:
-            return inz + complex(0, *self.reactance)  # add the inductive reactance of the inductor
+            return inz + complex(0, self.reactance)  # add the inductive reactance of the inductor
 
 
 class TransmissionLine:
     # length = physical length, characteristic = characteristic impedence, vf = velocity factor, configuration = shunt/series
-    #TODO: Figure out how to handle stubs and other transmission lines
-    def __init__(self, length, characteristic, vf, configuration):
-        self.length = length * vf
+    # TODO: Figure out how to handle stubs and other transmission lines
+    def __init__(self, plength, characteristic, vf, configuration):
+        self.length = plength * vf
         self.impedence = characteristic
         self.shunt = configuration
         self.type = 't'
 
     def getData(self, n):
-        return "T{0}: ".format(n) + str(self.impedence) + " Ω\t{0:.1f} m\t{1:8.4g} λ".format(self.length,
-                                                                                             self.length / (
-                                                                                                         c / frequency))
+        return "T{0}: ".format(n) + str(self.impedence) + " Ω\t{0:.1f} m\t{1:8.4g} λ".format(self.length, self.length / (c / frequency))
 
     def impede(self, inz):
         waveNumber = 2 * pi / (c / frequency)  # wavenumber = 2pi / λ
@@ -66,8 +63,8 @@ class TransmissionLine:
 
 
 class Resistor:
-    def __init__(self, resistance, configuration):
-        self.resistance = resistance
+    def __init__(self, r, configuration):
+        self.resistance = r
         self.shunt = configuration
         self.type = 'r'
 
@@ -185,14 +182,16 @@ while True:
         raise SystemExit
     elif action == 'd':
         Zo = calculateoutput(impedence, circuit)
-        print("Impedence at Z₀: "+str(Zo)+"Ω")
-        Gamma = (impedence - Zo)/(impedence + Zo)
+        print("Impedence at Z₀: {:.2f} Ω".format(Zo))
+        Zi = 50
+        Gamma = (Zi - Zo)/(Zi + Zo)
         SWR = (1 + abs(Gamma)) / (1 - abs(Gamma))
-        print("SWR Relative to 50+j0 Load: " + str(SWR))
+        print("SWR Relative to 50+j0 Ω Load: {0:.1f}:1".format(SWR))
     elif action == 'p':
         printcircuit(circuit)
     elif action == 'x':
         circuit = []
+        print("Network cleared.")
     elif action == 'h':
         print(helpMenu)
     elif action == 'c':
