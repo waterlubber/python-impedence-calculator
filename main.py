@@ -189,7 +189,11 @@ while True:
     if action == 'q':
         raise SystemExit
     elif action == 'd':
-        calculateoutput(circuit)
+        Zo = calculateoutput(impedence, circuit)
+        print("Impedence at Z₀: "+str(Zo)+"Ω")
+        Gamma = (impedence - Zo)/(impedence + Zo)
+        SWR = (1 + abs(Gamma)) / (1 - abs(Gamma))
+        print("SWR Relative to 50+j0 Load: " + str(SWR))
     elif action == 'p':
         printcircuit(circuit)
     elif action == 'x':
@@ -205,7 +209,8 @@ while True:
         inductance = float(input("Please enter an inductance in Henry: "))
         circuit.append(Inductor(inductance, config))
     elif action == 't':
-        config = getconfig()
+        config = False # Shunt transmission lines? What was I thinking?
+        print("Adding series transmission line...")
         length = float(input("Please enter the length in meters: "))
         z = getImpedence("Please enter the characteristic impedence in the form a ± bj: ")
         vf = float(input("Please enter the Velocity Factor as a fraction of c: "))
