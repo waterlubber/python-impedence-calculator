@@ -13,3 +13,4 @@ There is no backspace or edit functionality. I advise that you do not make mista
 - v0.10: Initial "release." Does not do any actual calculation, purely data storage framework.
 - v0.50: Early alpha. The program now has a function and does something. I'm not sure if it works, though.
 - v0.60: Fixed a bunch of bugs and made the program work *correctly*. I hope.
+- v0.70: Reorganize the program into separate files. Makes observing the program flow a little easier.
